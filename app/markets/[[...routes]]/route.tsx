@@ -31,8 +31,8 @@ app.frame('/:address', async (c) => {
     const tokensResponse: Token[] = await tokeData.json()
 
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
-    const {liquidity, volume} = await getLiquidityAndVolume(marketAddress, collateralToken)
-    const outcomeTokensPercent = await getOutcomeTokensPercent(marketResponse, collateralToken)
+    // const {liquidity, volume} = await getLiquidityAndVolume(marketAddress, collateralToken)
+    // const outcomeTokensPercent = await getOutcomeTokensPercent(marketResponse, collateralToken)
 
 
   return c.res({
@@ -49,11 +49,11 @@ app.frame('/:address', async (c) => {
                     <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '12px', maxWidth: '90%'}}>
                         <div style={{display: 'flex', flexDirection: 'column'}}>
                             <span style={{fontSize: '32px', fontWeight: 800, color: '#747675'}}>Liquidity</span>
-                            <span style={{fontSize: '28px'}}>{liquidity} {collateralToken.symbol}</span>
+                            <span style={{fontSize: '28px'}}>123 {collateralToken.symbol}</span>
                         </div>
                         <div style={{display: 'flex', flexDirection: 'column'}}>
                             <span style={{fontSize: '32px', fontWeight: 800, color: '#747675'}}>Volume</span>
-                            <span style={{fontSize: '28px'}}>{volume} {collateralToken.symbol}</span>
+                            <span style={{fontSize: '28px'}}>123 {collateralToken.symbol}</span>
                         </div>
                         <div style={{display: 'flex', flexDirection: 'column'}}>
                             <span style={{fontSize: '32px', fontWeight: 800, color: '#747675'}}>Deadline</span>
@@ -69,8 +69,10 @@ app.frame('/:address', async (c) => {
     ),
       intents: [
           <TextInput placeholder={`Enter amount `}/>,
-          <Button value=''>Yes {outcomeTokensPercent[0]}%</Button>,
-          <Button value={`${'No 50.00%'}`}>No {outcomeTokensPercent[1]}%</Button>,
+          // <Button value=''>Yes {outcomeTokensPercent[0]}%</Button>,
+          // <Button value={`${'No 50.00%'}`}>No {outcomeTokensPercent[1]}%</Button>,
+          <Button value=''>Yes 50.00%</Button>,
+          <Button value={`${'No 50.00%'}`}>No 50.00%</Button>,
       ],
   })
 })

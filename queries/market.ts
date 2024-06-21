@@ -43,6 +43,8 @@ export const getLiquidityAndVolume = async (marketAddress: string, collateralTok
 }
 
 export const getOutcomeTokensPercent = async (market: Market, collateralToken: Token) => {
+    console.log(market)
+    console.log(collateralToken)
     const fixedProductMarketMakerContract = getContract({
         address: market.address[defaultChain.id] as Address,
         abi: fixedProductMarketMakerABI,
