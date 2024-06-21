@@ -1,5 +1,5 @@
 import {Token} from "@/types/tokens";
-import {Market, MarketData} from "@/types/market";
+import {Market, MarketData, TradeQuotes} from "@/types/market";
 import {Address, formatUnits, getContract, parseUnits} from "viem";
 import {defaultChain, newSubgraphURI} from "@/queries/constants";
 import {getViemClient} from "@/contracts/utils";
@@ -30,6 +30,7 @@ export const getLiquidityAndVolume = async (marketAddress: string, collateralTok
     })
 
     const [_marketData] = res.data.data?.[queryName] as MarketData[]
+    console.log(_marketData)
     const liquidity = formatUnits(BigInt(_marketData.funding), collateralToken?.decimals || 18)
     const volume = formatUnits(
         BigInt(_marketData.totalVolume ?? '0'),
@@ -43,15 +44,13 @@ export const getLiquidityAndVolume = async (marketAddress: string, collateralTok
 }
 
 export const getOutcomeTokensPercent = async (market: Market, collateralToken: Token) => {
-    console.log(market)
-    console.log(collateralToken)
     const fixedProductMarketMakerContract = getContract({
         address: market.address[defaultChain.id] as Address,
         abi: fixedProductMarketMakerABI,
         client: getViemClient(),
     })
     if (!fixedProductMarketMakerContract || !collateralToken) {
-        return ['0', '0']
+        return [0, 0]
     }
 
     const collateralDecimals = collateralToken?.decimals ?? 18
@@ -71,8 +70,54 @@ export const getOutcomeTokensPercent = async (market: Market, collateralToken: T
     const outcomeTokenPriceNo = Number(collateralAmount) / Number(outcomeTokenAmountNo)
 
     const sum = outcomeTokenPriceYes + outcomeTokenPriceNo
-    const outcomeTokensPercentYes = ((outcomeTokenPriceYes / sum) * 100).toFixed(2)
-    const outcomeTokensPercentNo = ((outcomeTokenPriceNo / sum) * 100).toFixed(2)
+    const outcomeTokensPercentYes = +((outcomeTokenPriceYes / sum) * 100).toFixed(2)
+    const outcomeTokensPercentNo = +((outcomeTokenPriceNo / sum) * 100).toFixed(2)
 
     return [outcomeTokensPercentYes, outcomeTokensPercentNo]
+}
+
+export const getQuote = async (market: Market, collateralAmount: string, collateralToken: Token, outcomeTokenId: number, outcomeTokensBuyPercent: number[]) => {
+    const fixedProductMarketMakerContract = getContract({
+        address: market.address[defaultChain.id] as Address,
+        abi: fixedProductMarketMakerABI,
+        client: getViemClient(),
+    })
+    if (!fixedProductMarketMakerContract || !(Number(collateralAmount) > 0)) {
+        return null
+    }
+
+    const collateralAmountBI = parseUnits(collateralAmount ?? '0', collateralToken?.decimals || 18)
+
+    let outcomeTokenAmountBI = BigInt(0)
+    outcomeTokenAmountBI = (await fixedProductMarketMakerContract.read.calcBuyAmount([
+        collateralAmountBI,
+        outcomeTokenId,
+    ])) as bigint
+
+    if (outcomeTokenAmountBI == BigInt(0)) {
+        return null
+    }
+
+    const outcomeTokenAmount = formatUnits(outcomeTokenAmountBI, collateralToken.decimals || 18)
+    const outcomeTokenPrice = (Number(collateralAmount) / Number(outcomeTokenAmount)).toString()
+    const roi = ((Number(outcomeTokenAmount) / Number(collateralAmount) - 1) * 100).toString()
+
+    const priceImpact = Math.abs(
+        (Number(outcomeTokenPrice) / Number(outcomeTokensBuyPercent[outcomeTokenId] ?? 1) - 1) *
+        100
+    ).toString()
+
+    console.log(outcomeTokenPrice)
+    console.log(outcomeTokenAmount)
+    console.log(roi)
+    console.log(priceImpact)
+
+    const quotes: TradeQuotes = {
+        outcomeTokenPrice,
+        outcomeTokenAmount,
+        roi,
+        priceImpact,
+    }
+
+    return quotes
 }
