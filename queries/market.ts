@@ -1,10 +1,10 @@
-import axios from "axios";
 import {Token} from "@/types/tokens";
 import {Market, MarketData} from "@/types/market";
 import {Address, formatUnits, getContract, parseUnits} from "viem";
 import {defaultChain, newSubgraphURI} from "@/queries/constants";
 import {getViemClient} from "@/contracts/utils";
 import {fixedProductMarketMakerABI} from "@/contracts/abi/fixedProductMarketMakerABI";
+import axios from "axios";
 
 export const getLiquidityAndVolume = async (marketAddress: string, collateralToken: Token) => {
     const queryName = 'AutomatedMarketMaker'
@@ -16,9 +16,9 @@ export const getLiquidityAndVolume = async (marketAddress: string, collateralTok
             query ${queryName} {
               ${queryName} (
                 where: {
-                  id: { 
-                    _ilike: "${marketAddress}" 
-                  } 
+                  id: {
+                    _ilike: "${marketAddress}"
+                  }
                 }
               ) {
                 funding
