@@ -30,7 +30,6 @@ export const getLiquidityAndVolume = async (marketAddress: string, collateralTok
     })
 
     const [_marketData] = res.data.data?.[queryName] as MarketData[]
-    console.log(_marketData)
     const liquidity = formatUnits(BigInt(_marketData.funding), collateralToken?.decimals || 18)
     const volume = formatUnits(
         BigInt(_marketData.totalVolume ?? '0'),
@@ -106,11 +105,6 @@ export const getQuote = async (market: Market, collateralAmount: string, collate
         (Number(outcomeTokenPrice) / Number(outcomeTokensBuyPercent[outcomeTokenId] ?? 1) - 1) *
         100
     ).toString()
-
-    console.log(outcomeTokenPrice)
-    console.log(outcomeTokenAmount)
-    console.log(roi)
-    console.log(priceImpact)
 
     const quotes: TradeQuotes = {
         outcomeTokenPrice,

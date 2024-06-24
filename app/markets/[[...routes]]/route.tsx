@@ -2,24 +2,39 @@
 
 import { Button, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
-// import { neynar } from 'frog/hubs'
 import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
 import {Token} from "@/types/tokens";
 import {defaultChain} from "@/queries/constants";
 import {getLiquidityAndVolume, getOutcomeTokensPercent, getQuote} from "@/queries/market";
+import {fixedProductMarketMakerABI} from "@/contracts/abi/fixedProductMarketMakerABI";
+import {Address, parseUnits} from "viem";
+import {getViemClient} from "@/contracts/utils";
+import {createSystem} from "frog/ui";
+export const { vars } = createSystem()
 
 const app = new Frog({
   assetsPath: '/',
+    ui: {vars},
   basePath: '/markets',
+    initialState: {
+      marketAddress: ''
+    }
 })
 
 // Uncomment to use Edge Runtime
 // export const runtime = 'edge'
 
 app.frame('/:address', async (c) => {
-    const marketAddress = c.req.param('address')
-    const { buttonValue, inputText, status, deriveState } = c
+    const { deriveState, previousState } = c
+    const state = deriveState(previousState => {
+        if(!previousState.marketAddress) {
+            previousState.marketAddress = c.req.param('address')
+        }
+    })
+    const marketAddress = state.marketAddress || c.req.param('address')
+
+    const { buttonValue, inputText, status } = c
     const marketData = await fetch(`https://dev.api.limitless.exchange/markets/${marketAddress}`, {
         method: 'GET'
     })
@@ -30,25 +45,27 @@ app.frame('/:address', async (c) => {
     const tokensResponse: Token[] = await tokeData.json()
 
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
-    const outcomeTokensPercent = await getOutcomeTokensPercent(marketResponse, collateralToken)
+
     const {liquidity, volume} = await getLiquidityAndVolume(marketAddress, collateralToken)
+
+    // Todo get allowance
 
     const getIntents = () => {
         if(!buttonValue || !inputText) {
             return [
                 <TextInput placeholder={`Enter amount ${collateralToken.symbol}`}/>,
-                <Button value='buyYes'>Yes {outcomeTokensPercent[0].toString()}%</Button>,
-                <Button value='buyNo'>No {outcomeTokensPercent[1].toString()}%</Button>,
+                <Button value='buyYes'>Yes {marketResponse.prices[0].toFixed(2)}%</Button>,
+                <Button value='buyNo'>No {marketResponse.prices[1].toFixed(2)}%</Button>,
             ]
         }
         return [
-            <Button>Proceed</Button>
+            <Button.Transaction target={`/${state.marketAddress}/buy/${collateralToken.decimals}`}>Buy</Button.Transaction>
         ]
     }
 
     const getImage = async () => {
-        if(inputText) {
-            const values = await getQuote(marketResponse, inputText, collateralToken, buttonValue === 'buyYes' ? 0: 1, outcomeTokensPercent)
+        if(inputText && buttonValue) {
+            const values = await getQuote(marketResponse, inputText, collateralToken, buttonValue === 'buyYes' ? 0: 1, marketResponse.prices)
             return (
                 <div style={{
                     color: 'black',
@@ -162,6 +179,26 @@ app.frame('/:address', async (c) => {
     })
 })
 
+app.transaction('/:address/buy/:decimals', async (c) => {
+    const { frameData } = c;
+    const client = getViemClient()
+    const investmentAmount = parseUnits(frameData?.inputText || '1', +c.req.param('decimals'));
+    const minOutcomeTokensToBuy = await client.readContract({
+        address: c.req.param('address') as Address,
+        abi: fixedProductMarketMakerABI,
+        functionName: "calcBuyAmount",
+        args: [investmentAmount, 0],
+    });
+
+    return c.contract({
+        abi: fixedProductMarketMakerABI,
+        functionName: "buy",
+        args: [investmentAmount, 0, minOutcomeTokensToBuy],
+        chainId: "eip155:84532",
+        to: c.req.param('address') as Address,
+    });
+})
+
 // app.frame('/buyYes', async (c) => {
 //     return c.res({
 //         image: (
@@ -173,7 +210,10 @@ app.frame('/:address', async (c) => {
 //     })
 // })
 
-devtools(app, {serveStatic})
+devtools(app, {
+    basePath: '/debug', // devtools available at `http://localhost:5173/debug`
+    serveStatic,
+})
 
 export const GET = handle(app)
 export const POST = handle(app)
