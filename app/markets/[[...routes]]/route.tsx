@@ -11,7 +11,11 @@ import {fixedProductMarketMakerABI} from "@/contracts/abi/fixedProductMarketMake
 import {Address, erc20Abi, getContract, parseUnits} from "viem";
 import {getViemClient} from "@/contracts/utils";
 
-const app = new Frog({
+type State = {
+    marketAddress: string
+}
+
+const app = new Frog<{State: State}>({
   assetsPath: '/',
   basePath: '/markets',
     initialState: {
@@ -19,19 +23,13 @@ const app = new Frog({
     }
 })
 
-// Uncomment to use Edge Runtime
-// export const runtime = 'edge'
-
 app.frame('/:address', async (c) => {
     const { deriveState } = c
     const state = deriveState(previousState => {
-        // @ts-ignore
         if(!previousState.marketAddress) {
-            // @ts-ignore
             previousState.marketAddress = c.req.param('address')
         }
     })
-    // @ts-ignore
     const marketAddress = state.marketAddress || c.req.param('address')
 
     const { buttonValue, inputText } = c
@@ -55,7 +53,6 @@ app.frame('/:address', async (c) => {
             ]
         }
         return [
-            // @ts-ignore
             <Button.Transaction target={`/${state.marketAddress}/${collateralToken.address}/buy/${collateralToken.decimals}/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>
         ]
     }
@@ -121,7 +118,8 @@ app.frame('/:address', async (c) => {
                 display: 'flex',
                 flexDirection: 'column',
                 fontSize: 60,
-                backgroundColor: 'black',
+                backgroundImage: `url("https://storage.googleapis.com/limitless-exchange-assets/assets/background.png")`,
+                backgroundSize: '100% 100%',
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100%',
