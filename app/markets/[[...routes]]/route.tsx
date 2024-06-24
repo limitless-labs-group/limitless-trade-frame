@@ -2,7 +2,7 @@
 
 import { Button, Frog, TextInput } from 'frog'
 import { devtools } from 'frog/dev'
-import { handle } from 'frog/next'
+import {getFrameMetadata, handle} from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
 import {Token} from "@/types/tokens";
 import {defaultChain} from "@/queries/constants";
@@ -10,9 +10,18 @@ import {getQuote} from "@/queries/market";
 import {fixedProductMarketMakerABI} from "@/contracts/abi/fixedProductMarketMakerABI";
 import {Address, erc20Abi, getContract, parseUnits} from "viem";
 import {getViemClient} from "@/contracts/utils";
+import type {Metadata} from "next";
 
 type State = {
     marketAddress: string
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+    const url = process.env.VERCEL_URL || 'http://localhost:3000'
+    const frameMetadata = await getFrameMetadata(`${url}/markets`)
+    return {
+        other: frameMetadata,
+    }
 }
 
 const app = new Frog<{State: State}>({
