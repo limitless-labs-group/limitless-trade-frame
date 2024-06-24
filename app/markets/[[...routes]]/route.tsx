@@ -10,12 +10,9 @@ import {getQuote} from "@/queries/market";
 import {fixedProductMarketMakerABI} from "@/contracts/abi/fixedProductMarketMakerABI";
 import {Address, erc20Abi, getContract, parseUnits} from "viem";
 import {getViemClient} from "@/contracts/utils";
-import {createSystem} from "frog/ui";
-export const { vars } = createSystem()
 
 const app = new Frog({
   assetsPath: '/',
-    ui: {vars},
   basePath: '/markets',
     initialState: {
       marketAddress: ''
