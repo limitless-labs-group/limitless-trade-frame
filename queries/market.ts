@@ -1,5 +1,5 @@
 import {Token} from "@/types/tokens";
-import {Market, MarketData, TradeQuotes} from "@/types/market";
+import {Market, TradeQuotes} from "@/types/market";
 import {Address, formatUnits, getContract, parseUnits} from "viem";
 import {defaultChain} from "@/queries/constants";
 import {getViemClient} from "@/contracts/utils";

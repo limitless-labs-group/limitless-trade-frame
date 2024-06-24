@@ -1,8 +1,3 @@
-export interface MarketData {
-    funding: string
-    totalVolume: string
-}
-
 export type Market = {
     address: {
         [chainId: number]: string

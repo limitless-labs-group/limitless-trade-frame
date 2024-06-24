@@ -28,10 +28,13 @@ const app = new Frog({
 app.frame('/:address', async (c) => {
     const { deriveState } = c
     const state = deriveState(previousState => {
+        // @ts-ignore
         if(!previousState.marketAddress) {
+            // @ts-ignore
             previousState.marketAddress = c.req.param('address')
         }
     })
+    // @ts-ignore
     const marketAddress = state.marketAddress || c.req.param('address')
 
     const { buttonValue, inputText, status } = c
@@ -55,6 +58,7 @@ app.frame('/:address', async (c) => {
             ]
         }
         return [
+            // @ts-ignore
             <Button.Transaction target={`/${state.marketAddress}/${collateralToken.address}/buy/${collateralToken.decimals}/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>
         ]
     }
