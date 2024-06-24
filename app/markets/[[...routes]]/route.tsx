@@ -27,7 +27,6 @@ const app = new Frog({
 
 app.frame('/:address', async (c) => {
     const { deriveState } = c
-    console.log(c)
     const state = deriveState(previousState => {
         if(!previousState.marketAddress) {
             previousState.marketAddress = c.req.param('address')
@@ -64,26 +63,37 @@ app.frame('/:address', async (c) => {
         if(inputText && buttonValue) {
             const values = await getQuote(marketResponse, inputText, collateralToken, buttonValue === 'buyYes' ? 0: 1, marketResponse.prices)
             return (
-                <div style={{display: 'flex', gap: '100px', marginTop: '40px'}}>
-                    <div style={{display: 'flex', flexDirection: 'column'}}>
-                        <span style={{color: '#71FF65', fontSize: '28px'}}>{values ? (+values.outcomeTokenPrice).toFixed(6) : 0} {collateralToken.symbol}</span>
-                        <span style={{
-                            color: '#747675',
-                            fontSize: '28px'
-                        }}>Avg. Price</span>
+                <>
+                    <div style={{display: 'flex', gap: '100px', marginTop: '40px'}}>
+                        <div style={{display: 'flex', flexDirection: 'column'}}>
+                            <span style={{
+                                color: '#71FF65',
+                                fontSize: '28px'
+                            }}>{values ? (+values.outcomeTokenPrice).toFixed(6) : 0} {collateralToken.symbol}</span>
+                            <span style={{
+                                color: '#747675',
+                                fontSize: '28px'
+                            }}>Avg. Price</span>
+                        </div>
+                        <div style={{display: 'flex', flexDirection: 'column'}}>
+                            <span style={{
+                                color: '#71FF65',
+                                fontSize: '28px'
+                            }}>{values ? (+values.priceImpact).toFixed(2) : '0.00'}%</span>
+                            <span style={{color: '#747675', fontSize: '28px'}}>Price Impact</span>
+                        </div>
+                        <div style={{display: 'flex', flexDirection: 'column'}}>
+                            <span style={{
+                                color: '#71FF65',
+                                fontSize: '28px'
+                            }}>{values ? (+values.outcomeTokenAmount).toFixed(6) : 0} {collateralToken.symbol}</span>
+                            <span style={{
+                                color: '#747675',
+                                fontSize: '28px'
+                            }}>Potential Return</span>
+                        </div>
                     </div>
-                    <div style={{display: 'flex', flexDirection: 'column'}}>
-                        <span style={{color: '#71FF65', fontSize: '28px'}}>{0.01}%</span>
-                        <span style={{color: '#747675', fontSize: '28px'}}>Price Impact</span>
-                    </div>
-                    <div style={{display: 'flex', flexDirection: 'column'}}>
-                        <span style={{color: '#71FF65', fontSize: '28px'}}>{values ? (+values.outcomeTokenAmount).toFixed(6) : 0} {collateralToken.symbol}</span>
-                        <span style={{
-                            color: '#747675',
-                            fontSize: '28px'
-                        }}>Potential Return</span>
-                    </div>
-                </div>
+                </>
             )
         }
         return (
@@ -114,13 +124,14 @@ app.frame('/:address', async (c) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100%',
-                paddingX: '10%',
+                paddingLeft: '15%',
+                paddingRight: '15%',
                 maxWidth: '100%'
             }}>
                 <img src="/logo.png" alt="logo" style={{width: '185px', height: '40px'}}/>
                 <span style={{fontSize: '32px', fontWeight: 'bold', marginTop: '20px'}}>Have skin in your beliefs</span>
-                <span style={{fontSize: '40px', fontWeight: 'bold', marginTop: '60px'}}>{marketResponse.title}</span>
-                {getImageDynamicContent()}
+                <span style={{fontSize: '40px', fontWeight: 'bold', marginTop: '60px', textAlign: 'center'}}>{marketResponse.title}</span>
+                {await getImageDynamicContent()}
             </div>
         ),
         intents: getIntents(),

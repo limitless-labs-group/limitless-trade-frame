@@ -29,12 +29,9 @@ export const getQuote = async (market: Market, collateralAmount: string, collate
 
     const outcomeTokenAmount = formatUnits(outcomeTokenAmountBI, collateralToken.decimals || 18)
     const outcomeTokenPrice = (Number(collateralAmount) / Number(outcomeTokenAmount)).toString()
-    const roi = ((Number(outcomeTokenAmount) / Number(collateralAmount) - 1) * 100).toString()
 
-    const priceImpact = Math.abs(
-        (Number(outcomeTokenPrice) / Number(outcomeTokensBuyPercent[outcomeTokenId] ?? 1) - 1) *
-        100
-    ).toString()
+    const roi = ((Number(outcomeTokenAmount) / Number(collateralAmount) - 1) * 100).toString()
+    const priceImpact = Math.abs(Number(((outcomeTokensBuyPercent[outcomeTokenId] - 1))) / (Number(outcomeTokenPrice) * 100)).toString()
 
     const quotes: TradeQuotes = {
         outcomeTokenPrice,
