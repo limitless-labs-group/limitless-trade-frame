@@ -17,7 +17,7 @@ export const getQuote = async (market: Market, collateralAmount: string, collate
 
     const collateralAmountBI = parseUnits(collateralAmount ?? '0', collateralToken?.decimals || 18)
 
-    let outcomeTokenAmountBI = BigInt(0)
+    let outcomeTokenAmountBI
     outcomeTokenAmountBI = (await fixedProductMarketMakerContract.read.calcBuyAmount([
         collateralAmountBI,
         outcomeTokenId,

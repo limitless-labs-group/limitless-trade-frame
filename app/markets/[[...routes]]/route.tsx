@@ -37,7 +37,7 @@ app.frame('/:address', async (c) => {
     // @ts-ignore
     const marketAddress = state.marketAddress || c.req.param('address')
 
-    const { buttonValue, inputText, status } = c
+    const { buttonValue, inputText } = c
     const marketData = await fetch(`https://dev.api.limitless.exchange/markets/${marketAddress}`, {
         method: 'GET'
     })
