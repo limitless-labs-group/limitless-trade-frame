@@ -6,9 +6,9 @@ import { handle } from 'frog/next'
 import { serveStatic } from 'frog/serve-static'
 import {Token} from "@/types/tokens";
 import {defaultChain} from "@/queries/constants";
-import {getLiquidityAndVolume, getOutcomeTokensPercent, getQuote} from "@/queries/market";
+import {getQuote} from "@/queries/market";
 import {fixedProductMarketMakerABI} from "@/contracts/abi/fixedProductMarketMakerABI";
-import {Address, parseUnits} from "viem";
+import {Address, erc20Abi, getContract, parseUnits} from "viem";
 import {getViemClient} from "@/contracts/utils";
 import {createSystem} from "frog/ui";
 export const { vars } = createSystem()
@@ -26,7 +26,8 @@ const app = new Frog({
 // export const runtime = 'edge'
 
 app.frame('/:address', async (c) => {
-    const { deriveState, previousState } = c
+    const { deriveState } = c
+    console.log(c)
     const state = deriveState(previousState => {
         if(!previousState.marketAddress) {
             previousState.marketAddress = c.req.param('address')
@@ -46,10 +47,6 @@ app.frame('/:address', async (c) => {
 
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
 
-    const {liquidity, volume} = await getLiquidityAndVolume(marketAddress, collateralToken)
-
-    // Todo get allowance
-
     const getIntents = () => {
         if(!buttonValue || !inputText) {
             return [
@@ -59,114 +56,47 @@ app.frame('/:address', async (c) => {
             ]
         }
         return [
-            <Button.Transaction target={`/${state.marketAddress}/buy/${collateralToken.decimals}`}>Buy</Button.Transaction>
+            <Button.Transaction target={`/${state.marketAddress}/${collateralToken.address}/buy/${collateralToken.decimals}/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>
         ]
     }
 
-    const getImage = async () => {
+    const getImageDynamicContent = async () => {
         if(inputText && buttonValue) {
             const values = await getQuote(marketResponse, inputText, collateralToken, buttonValue === 'buyYes' ? 0: 1, marketResponse.prices)
             return (
-                <div style={{
-                    color: 'black',
-                    display: 'flex',
-                    fontSize: 60,
-                    backgroundColor: 'white',
-                    height: '100%',
-                    padding: '8px',
-                    maxWidth: '100%'
-                }}>
-                    <div style={{display: 'flex', gap: '16px'}}>
-                        <img src={marketResponse.imageURI} alt="market" style={{
-                            maxWidth: '400px',
-                            maxHeight: '400px',
-                            borderRadius: '12px',
-                        }}/>
-                        <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
-                            <span style={{fontSize: '40px', fontWeight: 'bold'}}>{marketResponse.title}</span>
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                marginTop: '12px',
-                                maxWidth: '90%'
-                            }}>
-                                <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span
-                                        style={{fontSize: '32px', fontWeight: 800, color: '#747675'}}>Avg. Price</span>
-                                    <span style={{fontSize: '28px'}}>{values ? (+values.outcomeTokenPrice).toFixed(6) : 0} {collateralToken.symbol}</span>
-                                </div>
-                                <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{
-                                        fontSize: '32px',
-                                        fontWeight: 800,
-                                        color: '#747675'
-                                    }}>Price Impact</span>
-                                    <span style={{fontSize: '28px'}}>{0.01}%</span>
-                                </div>
-                                <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{
-                                        fontSize: '32px',
-                                        fontWeight: 800,
-                                        color: '#747675'
-                                    }}>Potential Return</span>
-                                    <span style={{fontSize: '28px'}}>{values ? (+values.outcomeTokenAmount).toFixed(6) : 0} {collateralToken.symbol}</span>
-                                </div>
-                            </div>
-                        </div>
+                <div style={{display: 'flex', gap: '100px', marginTop: '40px'}}>
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <span style={{color: '#71FF65', fontSize: '28px'}}>{values ? (+values.outcomeTokenPrice).toFixed(6) : 0} {collateralToken.symbol}</span>
+                        <span style={{
+                            color: '#747675',
+                            fontSize: '28px'
+                        }}>Avg. Price</span>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <span style={{color: '#71FF65', fontSize: '28px'}}>{0.01}%</span>
+                        <span style={{color: '#747675', fontSize: '28px'}}>Price Impact</span>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <span style={{color: '#71FF65', fontSize: '28px'}}>{values ? (+values.outcomeTokenAmount).toFixed(6) : 0} {collateralToken.symbol}</span>
+                        <span style={{
+                            color: '#747675',
+                            fontSize: '28px'
+                        }}>Potential Return</span>
                     </div>
                 </div>
             )
         }
         return (
-            <div style={{
-                color: 'black',
-                display: 'flex',
-                fontSize: 60,
-                backgroundColor: 'white',
-                height: '100%',
-                padding: '8px',
-                maxWidth: '100%'
-            }}>
-                <div style={{display: 'flex', gap: '16px'}}>
-                    <img src={marketResponse.imageURI} alt="market" style={{
-                        maxWidth: '400px',
-                        maxHeight: '400px',
-                        borderRadius: '12px',
-                    }}/>
-                    <div style={{display: 'flex', flex: 1, flexDirection: 'column'}}>
-                        <span style={{fontSize: '40px', fontWeight: 'bold'}}>{marketResponse.title}</span>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            marginTop: '12px',
-                            maxWidth: '90%'
-                        }}>
-                            <div style={{display: 'flex', flexDirection: 'column'}}>
-                                <span style={{fontSize: '32px', fontWeight: 800, color: '#747675'}}>Liquidity</span>
-                                <span style={{fontSize: '28px'}}>{liquidity} {collateralToken.symbol}</span>
-                            </div>
-                            <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{
-                                        fontSize: '32px',
-                                        fontWeight: 800,
-                                        color: '#747675'
-                                    }}>Volume</span>
-                                <span
-                                    style={{fontSize: '28px'}}>{volume} {collateralToken.symbol}</span>
-                            </div>
-                            <div style={{display: 'flex', flexDirection: 'column'}}>
-                                    <span style={{
-                                        fontSize: '32px',
-                                        fontWeight: 800,
-                                        color: '#747675'
-                                    }}>Deadline</span>
-                                <span style={{fontSize: '28px'}}>{marketResponse.expirationDate}</span>
-                            </div>
-                        </div>
-                    </div>
+            <div style={{display: 'flex', gap: '100px', marginTop: '40px'}}>
+                <div
+                    style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                    <span style={{color: '#71FF65', fontSize: '28px'}}>{marketResponse.prices[0].toFixed(2)}%</span>
+                    <span style={{color: '#747675', fontSize: '28px'}}>Chance</span>
                 </div>
-                <div style={{display: 'flex', color: 'black'}}>
-                    asd
+                <div
+                    style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                    <span style={{color: '#71FF65', fontSize: '28px'}}>{marketResponse.expirationDate}</span>
+                    <span style={{color: '#747675', fontSize: '28px'}}>Deadline</span>
                 </div>
             </div>
         )
@@ -174,41 +104,70 @@ app.frame('/:address', async (c) => {
 
 
     return c.res({
-        image: getImage(),
+        image: (
+            <div style={{
+                color: 'white',
+                display: 'flex',
+                flexDirection: 'column',
+                fontSize: 60,
+                backgroundColor: 'black',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                paddingX: '10%',
+                maxWidth: '100%'
+            }}>
+                <img src="/logo.png" alt="logo" style={{width: '185px', height: '40px'}}/>
+                <span style={{fontSize: '32px', fontWeight: 'bold', marginTop: '20px'}}>Have skin in your beliefs</span>
+                <span style={{fontSize: '40px', fontWeight: 'bold', marginTop: '60px'}}>{marketResponse.title}</span>
+                {getImageDynamicContent()}
+            </div>
+        ),
         intents: getIntents(),
     })
 })
 
-app.transaction('/:address/buy/:decimals', async (c) => {
-    const { frameData } = c;
+app.transaction('/:address/:collateralContract/buy/:decimals/:index', async (c) => {
+    const {frameData} = c;
     const client = getViemClient()
-    const investmentAmount = parseUnits(frameData?.inputText || '1', +c.req.param('decimals'));
-    const minOutcomeTokensToBuy = await client.readContract({
-        address: c.req.param('address') as Address,
-        abi: fixedProductMarketMakerABI,
-        functionName: "calcBuyAmount",
-        args: [investmentAmount, 0],
-    });
+    const decimals = +c.req.param('decimals')
+    const investmentAmount = parseUnits(frameData?.inputText || '1', decimals);
+    const outcomeIndex = +c.req.param('index')
+    const collateralTokenAddress = c.req.param('collateralContract')
+    const marketAddress = c.req.param('address')
+    const tokenContract = getContract({
+        address: collateralTokenAddress as Address,
+        abi: erc20Abi,
+        client: getViemClient(),
+    })
 
-    return c.contract({
-        abi: fixedProductMarketMakerABI,
-        functionName: "buy",
-        args: [investmentAmount, 0, minOutcomeTokensToBuy],
-        chainId: "eip155:84532",
-        to: c.req.param('address') as Address,
-    });
+    const allowance = await tokenContract.read.allowance([frameData?.address as Address, marketAddress as Address])
+
+    if (allowance < parseUnits(frameData?.inputText || '1', decimals)) {
+        return c.contract({
+            abi: erc20Abi,
+            functionName: 'approve',
+            args: [marketAddress as Address, parseUnits('1000000000000', decimals)],
+            chainId: "eip155:84532",
+            to: collateralTokenAddress as Address
+        })
+    } else {
+        const minOutcomeTokensToBuy = await client.readContract({
+            address: c.req.param('address') as Address,
+            abi: fixedProductMarketMakerABI,
+            functionName: "calcBuyAmount",
+            args: [investmentAmount, outcomeIndex],
+        });
+
+        return c.contract({
+            abi: fixedProductMarketMakerABI,
+            functionName: "buy",
+            args: [investmentAmount, outcomeIndex, minOutcomeTokensToBuy],
+            chainId: "eip155:84532",
+            to: c.req.param('address') as Address,
+        });
+    }
 })
-
-// app.frame('/buyYes', async (c) => {
-//     return c.res({
-//         image: (
-//             <div></div>
-//         ),
-//         intents: [
-//             <Button value='asd'>asd</Button>
-//         ]
-//     })
-// })
 
 devtools(app, {
     basePath: '/debug', // devtools available at `http://localhost:5173/debug`
