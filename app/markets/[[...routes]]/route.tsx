@@ -25,7 +25,8 @@ const app = new Frog<{State: State}>({
     }
 })
 
-const accountToInvestmentAmount: Record<string, bigint> = {};
+let accountToInvestmentAmountRaw = '0'
+let accountToInvestmentAmountBI: bigint
 
 app.frame('/:address', async (c) => {
     const { deriveState } = c
@@ -105,7 +106,8 @@ app.transaction("/approve-tx/:address/:decimals/:collateralAddress", (c) => {
     }
     const decimals = +c.req.param('decimals')
     const investmentAmount = parseUnits(inputText || '1', decimals);
-    accountToInvestmentAmount[address] = investmentAmount;
+    accountToInvestmentAmountRaw = inputText || '1'
+    accountToInvestmentAmountBI = investmentAmount;
     const collateralTokenAddress = c.req.param('collateralAddress')
     const marketAddress = c.req.param('address')
     return c.contract({
@@ -139,8 +141,8 @@ app.frame('/buy/:address', async (c) => {
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
 
     const getImageDynamicContent = async () => {
-        if(inputText && buttonValue) {
-            const values = await getQuote(marketResponse, inputText, collateralToken, buttonValue === 'buyYes' ? 0: 1, marketResponse.prices)
+        if(['buyYes', 'buyNo'].includes(buttonValue || '')) {
+            const values = await getQuote(marketResponse, accountToInvestmentAmountRaw, collateralToken, buttonValue === 'buyYes' ? 0: 1, marketResponse.prices)
             return (
                 <>
                     <div style={{display: 'flex', gap: '100px', marginTop: '40px'}}>
@@ -199,6 +201,17 @@ app.frame('/buy/:address', async (c) => {
         )
     }
 
+    const getIntents = () => {
+        if(!['buyYes', 'buyNo'].includes(buttonValue || '')) {
+            return [
+                <Button value='buyYes'>Yes {marketResponse.prices[0].toFixed(2)}%</Button>,
+                <Button value='buyNo'>No {marketResponse.prices[1].toFixed(2)}%</Button>,
+            ]
+        }
+        return [
+            <Button.Transaction target={`/${collateralToken.address}/buy/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>
+        ]
+    }
 
     return c.res({
         image: (
@@ -222,15 +235,12 @@ app.frame('/buy/:address', async (c) => {
                 {await getImageDynamicContent()}
             </div>
         ),
-        intents: [
-            <Button.Transaction target={`/${collateralToken.address}/buy/0`}>Yes {marketResponse.prices[0].toFixed(2)}%</Button.Transaction>,
-            <Button.Transaction target={`/${collateralToken.address}/buy/1`}>No {marketResponse.prices[1].toFixed(2)}%</Button.Transaction>,
-        ]
+        intents: getIntents()
     })
 })
 
 app.transaction('/:collateralContract/buy/:index', async (c) => {
-    const {frameData, previousState} = c;
+    const {previousState} = c;
     const client = getViemClient()
 
     const outcomeIndex = +c.req.param('index')
@@ -239,13 +249,17 @@ app.transaction('/:collateralContract/buy/:index', async (c) => {
         address: previousState.marketAddress as Address,
         abi: fixedProductMarketMakerABI,
         functionName: "calcBuyAmount",
-        args: [accountToInvestmentAmount[frameData?.address || '0x'], outcomeIndex],
+        args: [accountToInvestmentAmountBI, outcomeIndex],
     });
+
+    console.log(accountToInvestmentAmountBI)
+    console.log(outcomeIndex)
+    console.log(minOutcomeTokensToBuy)
 
     return c.contract({
         abi: fixedProductMarketMakerABI,
         functionName: "buy",
-        args: [accountToInvestmentAmount[frameData?.address || '0x'], outcomeIndex, minOutcomeTokensToBuy],
+        args: [accountToInvestmentAmountBI, outcomeIndex, minOutcomeTokensToBuy],
         chainId: "eip155:84532",
         to: previousState.marketAddress as Address,
     });
