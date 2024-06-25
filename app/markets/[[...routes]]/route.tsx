@@ -136,7 +136,7 @@ app.frame('/buy/:address', async (c) => {
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
 
     const getIntents = () => {
-        if(!buttonValue || !inputText) {
+        if(buttonValue !== '_t' && !buttonValue || !inputText) {
             return [
                 <TextInput placeholder={`Enter amount ${collateralToken.symbol}`}/>,
                 <Button value='buyYes'>Yes {marketResponse.prices[0].toFixed(2)}%</Button>,
