@@ -252,10 +252,6 @@ app.transaction('/:collateralContract/buy/:index', async (c) => {
         args: [accountToInvestmentAmountBI, outcomeIndex],
     });
 
-    console.log(accountToInvestmentAmountBI)
-    console.log(outcomeIndex)
-    console.log(minOutcomeTokensToBuy)
-
     return c.contract({
         abi: fixedProductMarketMakerABI,
         functionName: "buy",
