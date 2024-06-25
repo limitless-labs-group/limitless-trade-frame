@@ -97,6 +97,7 @@ app.frame('/:address', async (c) => {
                 target={`/approve-tx/${marketAddress}/${collateralToken.decimals}/${collateralToken.address}`}>
                 Approve spend
             </Button.Transaction>,
+            <Button.Link href={`https://dev.limitless.echange/markets/${marketAddress}`}>Open Limitless</Button.Link>
         ],
     });
 })
@@ -208,10 +209,12 @@ app.frame('/buy/:address', async (c) => {
             return [
                 <Button value='buyYes'>Yes {marketResponse.prices[0].toFixed(2)}%</Button>,
                 <Button value='buyNo'>No {marketResponse.prices[1].toFixed(2)}%</Button>,
+                <Button.Link href={`https://dev.limitless.echange/markets/${marketAddress}`}>Open Limitless</Button.Link>
             ]
         }
         return [
-            <Button.Transaction target={`/${collateralToken.address}/buy/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>
+            <Button.Transaction target={`/${collateralToken.address}/buy/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>,
+            <Button.Link href={`https://dev.limitless.echange/markets/${marketAddress}`}>Open Limitless</Button.Link>
         ]
     }
 
