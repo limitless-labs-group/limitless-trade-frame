@@ -36,11 +36,11 @@ app.frame('/:address', async (c) => {
         }
     })
     const marketAddress = state.marketAddress || c.req.param('address')
-    const marketData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/markets/${marketAddress}`, {
+    const marketData = await fetch(`${process.env.BACKEND_API_URL}/markets/${marketAddress}`, {
         method: 'GET'
     })
     const marketResponse = await marketData.json()
-    const tokeData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/tokens`, {
+    const tokeData = await fetch(`${process.env.BACKEND_API_URL}/tokens`, {
         method: 'GET'
     })
     const tokensResponse: Token[] = await tokeData.json()
@@ -129,11 +129,11 @@ app.frame('/buy/:address', async (c) => {
     const marketAddress = state.marketAddress || c.req.param('address')
 
     const { buttonValue, inputText } = c
-    const marketData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/markets/${marketAddress}`, {
+    const marketData = await fetch(`${process.env.BACKEND_API_URL}/markets/${marketAddress}`, {
         method: 'GET'
     })
     const marketResponse = await marketData.json()
-    const tokeData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/tokens`, {
+    const tokeData = await fetch(`${process.env.BACKEND_API_URL}/tokens`, {
         method: 'GET'
     })
     const tokensResponse: Token[] = await tokeData.json()
