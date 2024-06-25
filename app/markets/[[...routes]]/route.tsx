@@ -28,6 +28,8 @@ const app = new Frog<{State: State}>({
 let accountToInvestmentAmountRaw = '0'
 let accountToInvestmentAmountBI: bigint
 
+const apiUrl = 'https://dev.api.limitless.exchange'
+
 app.frame('/:address', async (c) => {
     const { deriveState } = c
     const state = deriveState(previousState => {
@@ -36,11 +38,11 @@ app.frame('/:address', async (c) => {
         }
     })
     const marketAddress = state.marketAddress || c.req.param('address')
-    const marketData = await fetch(`${process.env.BACKEND_API_URL}/markets/${marketAddress}`, {
+    const marketData = await fetch(`${apiUrl}/markets/${marketAddress}`, {
         method: 'GET'
     })
     const marketResponse = await marketData.json()
-    const tokeData = await fetch(`${process.env.BACKEND_API_URL}/tokens`, {
+    const tokeData = await fetch(`${apiUrl}/tokens`, {
         method: 'GET'
     })
     const tokensResponse: Token[] = await tokeData.json()
@@ -129,11 +131,11 @@ app.frame('/buy/:address', async (c) => {
     const marketAddress = state.marketAddress || c.req.param('address')
 
     const { buttonValue, inputText } = c
-    const marketData = await fetch(`${process.env.BACKEND_API_URL}/markets/${marketAddress}`, {
+    const marketData = await fetch(`${apiUrl}/markets/${marketAddress}`, {
         method: 'GET'
     })
     const marketResponse = await marketData.json()
-    const tokeData = await fetch(`${process.env.BACKEND_API_URL}/tokens`, {
+    const tokeData = await fetch(`${apiUrl}/tokens`, {
         method: 'GET'
     })
     const tokensResponse: Token[] = await tokeData.json()
