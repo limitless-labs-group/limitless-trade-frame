@@ -38,6 +38,8 @@ app.frame('/:address', async (c) => {
         }
     })
     const marketAddress = state.marketAddress || c.req.param('address')
+    console.log(marketAddress)
+    console.log(apiUrl)
     const marketData = await fetch(`${apiUrl}/markets/${marketAddress}`, {
         method: 'GET'
     })
@@ -47,6 +49,7 @@ app.frame('/:address', async (c) => {
     })
     const tokensResponse: Token[] = await tokeData.json()
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
+    console.log(marketResponse)
     return c.res({
         action: `/buy/${marketAddress}`,
         image: (
@@ -97,6 +100,7 @@ app.frame('/:address', async (c) => {
                 target={`/approve-tx/${marketAddress}/${collateralToken.decimals}/${collateralToken.address}`}>
                 Approve spend
             </Button.Transaction>,
+            <Button.Link href={`https://limitless.exchange/markets/${marketAddress}`}>Open Limitless</Button.Link>
         ],
     });
 })
@@ -208,10 +212,12 @@ app.frame('/buy/:address', async (c) => {
             return [
                 <Button value='buyYes'>Yes {marketResponse.prices[0].toFixed(2)}%</Button>,
                 <Button value='buyNo'>No {marketResponse.prices[1].toFixed(2)}%</Button>,
+                <Button.Link href={`https://limitless.exchange/markets/${marketAddress}`}>Open Limitless</Button.Link>
             ]
         }
         return [
-            <Button.Transaction target={`/${collateralToken.address}/buy/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>
+            <Button.Transaction target={`/${collateralToken.address}/buy/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>,
+            <Button.Link href={`https://limitless.exchange/markets/${marketAddress}`}>Open Limitless</Button.Link>
         ]
     }
 
