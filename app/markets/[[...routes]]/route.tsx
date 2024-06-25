@@ -81,7 +81,7 @@ app.frame('/:address', async (c) => {
                     <div
                         style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
                         <span style={{color: '#71FF65', fontSize: '28px'}}>{formatUnits(marketResponse.liquidity, collateralToken.decimals)} {collateralToken.symbol}</span>
-                        <span style={{color: '#747675', fontSize: '28px'}}>Volume</span>
+                        <span style={{color: '#747675', fontSize: '28px'}}>Liquidity</span>
                     </div>
                     <div
                         style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
@@ -192,7 +192,7 @@ app.frame('/buy/:address', async (c) => {
                         color: '#71FF65',
                         fontSize: '28px'
                     }}>{formatUnits(marketResponse.liquidity, collateralToken.decimals)} {collateralToken.symbol}</span>
-                    <span style={{color: '#747675', fontSize: '28px'}}>Volume</span>
+                    <span style={{color: '#747675', fontSize: '28px'}}>Liquidity</span>
                 </div>
                 <div
                     style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
