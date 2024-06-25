@@ -25,6 +25,8 @@ const app = new Frog<{State: State}>({
     }
 })
 
+const accountToInvestmentAmount: Record<string, bigint> = {};
+
 app.frame('/:address', async (c) => {
     const { deriveState } = c
     const state = deriveState(previousState => {
@@ -87,7 +89,7 @@ app.frame('/:address', async (c) => {
             </div>
         ),
         intents: [
-            <TextInput placeholder={`Enter amount ${collateralToken.symbol}`}/>,
+            <TextInput placeholder={`Enter amount ${collateralToken.symbol}`} />,
             <Button.Transaction
                 target={`/approve-tx/${marketAddress}/${collateralToken.decimals}/${collateralToken.address}`}>
                 Approve spend
@@ -97,12 +99,13 @@ app.frame('/:address', async (c) => {
 })
 
 app.transaction("/approve-tx/:address/:decimals/:collateralAddress", (c) => {
-    const {inputText} = c;
+    const {inputText, address} = c;
     if (!inputText) {
         throw new Error("Invalid input: inputText must be a non-empty string");
     }
     const decimals = +c.req.param('decimals')
     const investmentAmount = parseUnits(inputText || '1', decimals);
+    accountToInvestmentAmount[address] = investmentAmount;
     const collateralTokenAddress = c.req.param('collateralAddress')
     const marketAddress = c.req.param('address')
     return c.contract({
@@ -127,6 +130,7 @@ app.frame('/buy/:address', async (c) => {
     const marketData = await fetch(`https://dev.api.limitless.exchange/markets/${marketAddress}`, {
         method: 'GET'
     })
+    console.log(c)
     const marketResponse = await marketData.json()
     const tokeData = await fetch('https://dev.api.limitless.exchange/tokens', {
         method: 'GET'
@@ -134,19 +138,6 @@ app.frame('/buy/:address', async (c) => {
     const tokensResponse: Token[] = await tokeData.json()
 
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
-
-    const getIntents = () => {
-        if(buttonValue !== 'buyYes' && buttonValue !== 'buyNo' || !inputText) {
-            return [
-                <TextInput placeholder={`Enter amount ${collateralToken.symbol}`}/>,
-                <Button value='buyYes'>Yes {marketResponse.prices[0].toFixed(2)}%</Button>,
-                <Button value='buyNo'>No {marketResponse.prices[1].toFixed(2)}%</Button>,
-            ]
-        }
-        return [
-            <Button.Transaction target={`/${collateralToken.address}/buy/${collateralToken.decimals}/${buttonValue === 'buyYes' ? '0' : '1'}`}>Buy</Button.Transaction>
-        ]
-    }
 
     const getImageDynamicContent = async () => {
         if(inputText && buttonValue) {
@@ -232,28 +223,30 @@ app.frame('/buy/:address', async (c) => {
                 {await getImageDynamicContent()}
             </div>
         ),
-        intents: getIntents(),
+        intents: [
+            <Button.Transaction target={`/${collateralToken.address}/buy/0`}>Yes {marketResponse.prices[0].toFixed(2)}%</Button.Transaction>,
+            <Button.Transaction target={`/${collateralToken.address}/buy/1`}>No {marketResponse.prices[1].toFixed(2)}%</Button.Transaction>,
+        ]
     })
 })
 
-app.transaction('/:collateralContract/buy/:decimals/:index', async (c) => {
+app.transaction('/:collateralContract/buy/:index', async (c) => {
     const {frameData, previousState} = c;
     const client = getViemClient()
-    const decimals = +c.req.param('decimals')
-    const investmentAmount = parseUnits(frameData?.inputText || '1', decimals);
+
     const outcomeIndex = +c.req.param('index')
 
     const minOutcomeTokensToBuy = await client.readContract({
         address: previousState.marketAddress as Address,
         abi: fixedProductMarketMakerABI,
         functionName: "calcBuyAmount",
-        args: [investmentAmount, outcomeIndex],
+        args: [accountToInvestmentAmount[frameData?.address || '0x'], outcomeIndex],
     });
 
     return c.contract({
         abi: fixedProductMarketMakerABI,
         functionName: "buy",
-        args: [investmentAmount, outcomeIndex, minOutcomeTokensToBuy],
+        args: [accountToInvestmentAmount[frameData?.address || '0x'], outcomeIndex, minOutcomeTokensToBuy],
         chainId: "eip155:84532",
         to: previousState.marketAddress as Address,
     });
