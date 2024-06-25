@@ -36,11 +36,11 @@ app.frame('/:address', async (c) => {
         }
     })
     const marketAddress = state.marketAddress || c.req.param('address')
-    const marketData = await fetch(`https://dev.api.limitless.exchange/markets/${marketAddress}`, {
+    const marketData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/markets/${marketAddress}`, {
         method: 'GET'
     })
     const marketResponse = await marketData.json()
-    const tokeData = await fetch('https://dev.api.limitless.exchange/tokens', {
+    const tokeData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/tokens`, {
         method: 'GET'
     })
     const tokensResponse: Token[] = await tokeData.json()
@@ -114,7 +114,7 @@ app.transaction("/approve-tx/:address/:decimals/:collateralAddress", (c) => {
         abi: erc20Abi,
         functionName: 'approve',
         args: [marketAddress as Address, investmentAmount],
-        chainId: "eip155:84532",
+        chainId: `eip155:${defaultChain.id}`,
         to: collateralTokenAddress as Address
     })
 });
@@ -129,11 +129,11 @@ app.frame('/buy/:address', async (c) => {
     const marketAddress = state.marketAddress || c.req.param('address')
 
     const { buttonValue, inputText } = c
-    const marketData = await fetch(`https://dev.api.limitless.exchange/markets/${marketAddress}`, {
+    const marketData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/markets/${marketAddress}`, {
         method: 'GET'
     })
     const marketResponse = await marketData.json()
-    const tokeData = await fetch('https://dev.api.limitless.exchange/tokens', {
+    const tokeData = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/tokens`, {
         method: 'GET'
     })
     const tokensResponse: Token[] = await tokeData.json()
@@ -256,7 +256,7 @@ app.transaction('/:collateralContract/buy/:index', async (c) => {
         abi: fixedProductMarketMakerABI,
         functionName: "buy",
         args: [accountToInvestmentAmountBI, outcomeIndex, minOutcomeTokensToBuy],
-        chainId: "eip155:84532",
+        chainId: `eip155:${defaultChain.id}`,
         to: previousState.marketAddress as Address,
     });
 })
