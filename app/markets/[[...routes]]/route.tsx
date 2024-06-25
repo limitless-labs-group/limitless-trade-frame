@@ -130,7 +130,6 @@ app.frame('/buy/:address', async (c) => {
     const marketData = await fetch(`https://dev.api.limitless.exchange/markets/${marketAddress}`, {
         method: 'GET'
     })
-    console.log(c)
     const marketResponse = await marketData.json()
     const tokeData = await fetch('https://dev.api.limitless.exchange/tokens', {
         method: 'GET'
