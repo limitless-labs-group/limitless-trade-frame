@@ -1,3 +1,3 @@
-import {base, baseSepolia} from "viem/chains";
+import {base} from "viem/chains";
 
-export const defaultChain = process.env.CHAIN_TYPE === 'testnet' ? baseSepolia : base
+export const defaultChain = base
