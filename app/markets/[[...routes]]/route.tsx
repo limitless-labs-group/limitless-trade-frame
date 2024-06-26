@@ -38,8 +38,6 @@ app.frame('/:address', async (c) => {
         }
     })
     const marketAddress = state.marketAddress || c.req.param('address')
-    console.log(marketAddress)
-    console.log(apiUrl)
     const marketData = await fetch(`${apiUrl}/markets/${marketAddress}`, {
         method: 'GET'
     })
@@ -49,8 +47,8 @@ app.frame('/:address', async (c) => {
     })
     const tokensResponse: Token[] = await tokeData.json()
     const collateralToken = tokensResponse.find((token) => token.address.toLowerCase() === marketResponse.collateralToken[defaultChain.id].toLowerCase()) as Token
-    console.log(marketResponse)
     return c.res({
+        browserLocation: `https://limitless.exchange/markets/${marketAddress}`,
         action: `/buy/${marketAddress}`,
         image: (
             <div style={{
