@@ -1,13 +1,12 @@
 import {Token} from "@/types/tokens";
-import {Market, TradeQuotes} from "@/types/market";
+import {TradeQuotes} from "@/types/market";
 import {Address, formatUnits, getContract, parseUnits} from "viem";
-import {defaultChain} from "@/queries/constants";
 import {getViemClient} from "@/contracts/utils";
 import {fixedProductMarketMakerABI} from "@/contracts/abi/fixedProductMarketMakerABI";
 
-export const getQuote = async (market: Market, collateralAmount: string, collateralToken: Token, outcomeTokenId: number, outcomeTokensBuyPercent: number[]) => {
+export const getQuote = async (marketAddress: string, collateralAmount: string, collateralToken: Token, outcomeTokenId: number, outcomeTokensBuyPercent: number[]) => {
     const fixedProductMarketMakerContract = getContract({
-        address: market.address[defaultChain.id] as Address,
+        address: marketAddress as Address,
         abi: fixedProductMarketMakerABI,
         client: getViemClient(),
     })
@@ -15,7 +14,7 @@ export const getQuote = async (market: Market, collateralAmount: string, collate
         return null
     }
 
-    const collateralAmountBI = parseUnits(collateralAmount ?? '0', collateralToken?.decimals || 18)
+    const collateralAmountBI = parseUnits(collateralAmount ?? '0', collateralToken.decimals || 18)
 
     let outcomeTokenAmountBI
     outcomeTokenAmountBI = (await fixedProductMarketMakerContract.read.calcBuyAmount([
